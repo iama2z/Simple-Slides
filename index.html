@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Hogan Science Slides</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.css">
+    <link id="theme" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/theme/league.css">
+
+    <style>
+        /* --- APP STYLING --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #2c3e50; overflow: hidden; }
+        
+        #editor-ui { display: flex; height: 100vh; width: 100vw; background: linear-gradient(135deg, #1e3c72, #2a5298); }
+        .sidebar { width: 350px; background: rgba(255,255,255,0.95); padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 10; overflow-y: auto; }
+        .main-preview { flex-grow: 1; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0; background-image: radial-gradient(#ccc 1px, transparent 1px); background-size: 20px 20px; position: relative; }
+
+        h2 { margin-top: 0; color: #333; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        label { font-size: 0.85rem; color: #666; font-weight: bold; margin-top: 10px; display: block; }
+        
+        textarea { flex-grow: 1; min-height: 200px; margin-top: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 13px; resize: none; }
+        select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex-grow: 1; transition: 0.2s; }
+        
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-secondary { background: #e2e6ea; color: #333; }
+        .btn-secondary:hover { background: #dbe0e5; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+
+        #settings-btn { position: absolute; top: 20px; right: 20px; background: white; padding: 10px 15px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; z-index: 100; font-size: 1.2rem; border: none; }
+        #settings-modal { display: none; position: fixed; top: 60px; right: 20px; width: 250px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 101; }
+        .setting-row { margin-bottom: 15px; }
+        input[type="color"] { width: 100%; padding: 5px; margin-top: 5px; }
+
+        /* UI Separator */
+        hr { border: 0; height: 1px; background: #ddd; margin: 15px 0; }
+
+        #present-controls { display: none; position: fixed; bottom: 20px; left: 20px; z-index: 200; }
+        #present-controls button { width: 50px; height: 50px; border-radius: 50%; font-size: 24px; padding: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.2); color: white; transition: 0.3s; }
+        #present-controls button:hover { background: rgba(255,255,255,1); color: #333; transform: scale(1.1); }
+
+        #timer-widget { display: none; position: fixed; top: 20px; right: 20px; background: rgba(20, 30, 45, 0.95); border: 2px solid #007bff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 9999; padding: 15px 30px; align-items: center; justify-content: center; flex-direction: column; color: white; font-family: 'Courier New', monospace; cursor: pointer; transition: all 0.3s ease; }
+        #timer-widget.fullscreen { top: 0; right: 0; width: 100vw; height: 100vh; border: none; border-radius: 0; background: rgba(0, 0, 0, 0.95); }
+        #timer-display { font-size: 4rem; font-weight: bold; text-shadow: 0 0 10px #007bff; line-height: 1; transition: font-size 0.3s ease; }
+        #timer-widget.fullscreen #timer-display { font-size: 20vw; }
+        #timer-msg { font-size: 0.8rem; opacity: 0.7; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; transition: font-size 0.3s ease; }
+        #timer-widget.fullscreen #timer-msg { font-size: 2rem; }
+
+        .reveal { display: none; }
+    </style>
+</head>
+<body>
+
+    <button id="settings-btn">⚙️ Design</button>
+
+    <div id="settings-modal">
+        <div class="setting-row">
+            <label>Theme Preset</label>
+            <select id="theme-selector">
+                <option value="league">League (Dark)</option>
+                <option value="black">Black</option>
+                <option value="white">White</option>
+                <option value="night">Night</option>
+                <option value="dracula">Dracula</option>
+                <option value="sky">Sky Blue</option>
+            </select>
+        </div>
+        <div class="setting-row">
+            <label>Main Font</label>
+            <select id="font-selector">
+                <option value="Source Sans Pro">Source Sans (Standard)</option>
+                <option value="Times New Roman">Times New Roman (Formal)</option>
+                <option value="Courier New">Courier (Code/Tech)</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="editor-ui">
+        <div class="sidebar">
+            <h2>🧪 Lesson Builder</h2>
+            
+            <label>📚 Lesson Library</label>
+            <select id="library-selector">
+                <option value="">-- Choose a Lesson --</option>
+                <option value="lessons/01_lab_safety.md">Unit 1: Lab Safety</option>
+                <option value="lessons/02_water_cycle.md">Unit 2: The Water Cycle</option>
+                <option value="lessons/03_newtons_laws.md">Unit 3: Newton's Laws</option>
+            </select>
+            <button class="btn-secondary" id="load-library-btn" style="margin-top: 5px;">📥 Load Lesson</button>
+
+            <hr>
+
+            <label>📝 Editor / Manual Upload</label>
+            <textarea id="markdown-input" spellcheck="false" placeholder="# Title Here&#10;&#10;* Bullet 1&#10;* Bullet 2"></textarea>
+            
+            <div class="btn-group">
+                <input type="file" id="file-input" hidden>
+                <button class="btn-secondary" id="open-file-btn" title="Open .md file">📂 Local File</button>
+                <button class="btn-success" id="save-file-btn" title="Save to computer">💾 Save</button>
+            </div>
+            <button class="btn-primary" id="launch-btn" style="margin-top: 10px; width: 100%; padding: 15px; font-size: 1.1rem;">🚀 PRESENT NOW</button>
+            
+            <div style="margin-top: 15px; font-size: 0.75rem; color: #666; background: #eee; padding: 10px; border-radius: 4px;">
+                <b>Shortcuts:</b> [F] Fullscreen | [C] Confetti | [1-9] Timer | [Esc] Cancel
+            </div>
+        </div>
+        
+        <div class="main-preview">
+            <div style="text-align:center; color: #666;">
+                <h1>Ready to Teach?</h1>
+                <p>Select a lesson from the library, or paste new text.<br>Then click 🚀 <b>PRESENT NOW</b>.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="timer-widget" title="Click to expand/shrink">
+        <div id="timer-display">00:00</div>
+        <div id="timer-msg">Click to Expand | Esc to Stop</div>
+    </div>
+
+    <div class="reveal">
+        <div class="slides" id="slides-container"></div>
+    </div>
+
+    <div id="present-controls">
+        <button onclick="location.reload()" title="Edit Mode">✏️</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script type="module">
+        import Reveal from 'https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.esm.js';
+        import Markdown from 'https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/markdown/markdown.esm.js';
+        import MathReveal from 'https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/math/math.esm.js';
+
+        // --- NEW: Library Fetch Logic ---
+        document.getElementById('load-library-btn').addEventListener('click', async () => {
+            const url = document.getElementById('library-selector').value;
+            if (!url) {
+                alert("Please select a lesson from the dropdown.");
+                return;
+            }
+            
+            document.getElementById('load-library-btn').innerText = "Loading...";
+            
+            try {
+                // This fetches the file from your GitHub folder
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("File not found");
+                const text = await response.text();
+                
+                // Put the text into the editor box
+                document.getElementById('markdown-input').value = text;
+                document.getElementById('load-library-btn').innerText = "📥 Load Lesson";
+            } catch (error) {
+                alert("Could not load the lesson. Have you uploaded it to the 'lessons' folder on GitHub yet?");
+                document.getElementById('load-library-btn').innerText = "📥 Load Lesson";
+            }
+        });
+
+        // --- Standard Sound & Confetti ---
+        function playCelebrationSound() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return; 
+            const ctx = new AudioContext();
+            const playNote = (freq, time, duration) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine'; osc.frequency.value = freq;
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(time); gain.gain.setValueAtTime(0.1, time); gain.gain.exponentialRampToValueAtTime(0.00001, time + duration); osc.stop(time + duration);
+            };
+            const now = ctx.currentTime;
+            playNote(523.25, now, 0.6); playNote(659.25, now + 0.1, 0.6); playNote(783.99, now + 0.2, 0.6); playNote(1046.50, now + 0.3, 1.2);
+        }
+
+        function triggerConfetti() {
+            playCelebrationSound();
+            var duration = 3000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 99999 };
+            function randomInOut(min, max) { return Math.random() * (max - min) + min; }
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        // --- Timer Logic ---
+        let timerInterval = null;
+        const timerWidget = document.getElementById('timer-widget');
+        timerWidget.addEventListener('click', function() { this.classList.toggle('fullscreen'); });
+
+        function startTimer(minutes) {
+            let seconds = minutes * 60;
+            timerWidget.style.display = 'flex';
+            timerWidget.classList.remove('fullscreen');
+            updateDisplay(seconds);
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                seconds--; updateDisplay(seconds);
+                if (seconds <= 0) { clearInterval(timerInterval); timerWidget.style.display = 'none'; triggerConfetti(); }
+            }, 1000);
+        }
+        
+        function updateDisplay(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('editor-ui').style.display !== 'none') return;
+            if (e.key.toLowerCase() === 'c') triggerConfetti();
+            if (e.key === 'Escape') {
+                if (timerWidget.style.display === 'flex') { clearInterval(timerInterval); timerWidget.style.display = 'none'; timerWidget.classList.remove('fullscreen'); }
+            }
+            if (!isNaN(parseInt(e.key))) {
+                let min = parseInt(e.key); if (min === 0) min = 10; startTimer(min);
+            }
+        });
+
+        // --- Existing UI Logic ---
+        document.getElementById('settings-btn').addEventListener('click', () => {
+             const modal = document.getElementById('settings-modal');
+             modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.getElementById('theme-selector').addEventListener('change', function(e) {
+            document.getElementById('theme').href = `https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/theme/${e.target.value}.css`;
+        });
+        document.getElementById('font-selector').addEventListener('change', function(e) {
+            document.documentElement.style.setProperty('--r-main-font', e.target.value);
+            document.documentElement.style.setProperty('--r-heading-font', e.target.value);
+        });
+
+        document.getElementById('open-file-btn').addEventListener('click', () => document.getElementById('file-input').click());
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => document.getElementById('markdown-input').value = e.target.result;
+            reader.readAsText(file);
+        });
+
+        document.getElementById('save-file-btn').addEventListener('click', function() {
+            const text = document.getElementById('markdown-input').value; if (!text) return; 
+            const blob = new Blob([text], { type: 'text/markdown' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `Lesson_${date}.md`;
+            a.click(); URL.revokeObjectURL(a.href);
+        });
+
+        document.getElementById('launch-btn').addEventListener('click', function() {
+            const text = document.getElementById('markdown-input').value;
+            const slidesContainer = document.getElementById('slides-container');
+            
+            document.getElementById('editor-ui').style.display = 'none';
+            document.getElementById('settings-btn').style.display = 'none'; 
+            document.getElementById('settings-modal').style.display = 'none';
+            document.querySelector('.reveal').style.display = 'block';
+            document.getElementById('present-controls').style.display = 'block';
+
+            slidesContainer.innerHTML = `<section data-markdown data-separator="^\\n---$" data-separator-vertical="^\\n--$"><script type="text/template">${text}<\/script></section>`;
+            Reveal.initialize({ controls: true, progress: true, history: false, center: true, slideNumber: true, plugins: [ Markdown, MathReveal ] });
+        });
+    </script>
+</body>
+</html>
